@@ -55,7 +55,7 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 
 	if (buffer_size <= 0) return FMOD_ERR_MEMORY;
 
-	for (unsigned int samp = 0; samp < length; samp++)	//run through sample length
+	for (unsigned int samp = 0; samp < length; samp++)	//run through sample length				
 	{
 		for (int chan = 0; chan < *outchannels; chan++)	//run through out channels length
 		{
@@ -66,7 +66,7 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 			outbuffer[samp * *outchannels + chan] = (
 				inbuffer[samp * *outchannels + chan] +
 				data->circ_buffer[(data->sample_count - 1 * inchannels + chan) % buffer_size] +
-				data->circ_buffer[(data->sample_count - 2 * inchannels + chan) % buffer_size] +
+				data->circ_buffer[(data->sample_count - 2 * inchannels + chan) % buffer_size] + 
 				data->circ_buffer[(data->sample_count - 3 * inchannels + chan) % buffer_size]
 				) / 4;
 			*/
@@ -77,7 +77,7 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 			outbuffer[samp * *outchannels + chan] = 0;
 			for (int i = 0; i < mean_length; i++) {
 				outbuffer[samp * *outchannels + chan] +=
-					data->circ_buffer[(data->sample_count - i * inchannels + chan) % buffer_size];
+					data->circ_buffer[(data->sample_count - i * inchannels + chan) % buffer_size]; 
 			}
 			outbuffer[samp * *outchannels + chan] = outbuffer[samp * *outchannels + chan] / mean_length;
 		}
