@@ -20,7 +20,7 @@ void FmodErrorCheck(FMOD_RESULT result)
 	Callback called when DSP is created.   This implementation creates a structure which is attached to the dsp state's 'plugindata' member.
 */FMOD_RESULT F_CALLBACK myDSPCreateCallback(FMOD_DSP_STATE* dsp_state)
 {
-	unsigned int blocksize;
+	unsigned int blocksize = 256;
 	FMOD_RESULT result;
 
 	result = dsp_state->functions->getblocksize(dsp_state, &blocksize);
@@ -50,17 +50,17 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 {
 	mydsp_data_t* data = (mydsp_data_t*) dsp_state->plugindata;	//add data into our structure
 
-	int buffer_size = sizeof(*data->circ_buffer) / sizeof(float);
+	auto buffer_size = 40 * inchannels; // sizeof(*data->circ_buffer) / sizeof(float); 
+	auto mean_length = buffer_size / inchannels;
+
 	if (buffer_size <= 0) return FMOD_ERR_MEMORY;
 
 	for (unsigned int samp = 0; samp < length; samp++)	//run through sample length
 	{
 		for (int chan = 0; chan < *outchannels; chan++)	//run through out channels length
 		{
-			/*
-			This DSP filter just halves the volume!
-			Input is modified, and sent to output.
-			*/
+			// FIR Filter with 4 coefficients
+			/*	
 			int circ_write_pos = (data->sample_count * inchannels + chan) % buffer_size;
 			data->circ_buffer[circ_write_pos] = inbuffer[samp + inchannels + chan];
 			outbuffer[samp * *outchannels + chan] = (
@@ -69,6 +69,17 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 				data->circ_buffer[(data->sample_count - 2 * inchannels + chan) % buffer_size] +
 				data->circ_buffer[(data->sample_count - 3 * inchannels + chan) % buffer_size]
 				) / 4;
+			*/
+
+			// FIR Filter by change buffer size
+			int circ_write_pos = (data->sample_count * inchannels + chan) % buffer_size;
+			data->circ_buffer[circ_write_pos] = inbuffer[samp * inchannels + chan];
+			outbuffer[samp * *outchannels + chan] = 0;
+			for (int i = 0; i < mean_length; i++) {
+				outbuffer[samp * *outchannels + chan] +=
+					data->circ_buffer[(data->sample_count - i * inchannels + chan) % buffer_size];
+			}
+			outbuffer[samp * *outchannels + chan] = outbuffer[samp * *outchannels + chan] / mean_length;
 		}
 		data->sample_count++;
 	}
