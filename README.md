@@ -1,2 +1,3 @@
-# FIRWithCircularBuffer
-This repository contains an FIR filter implemented with a circular buffer using FMOD and C++/OpenGL.
+# FIR Filter Using Circular Buffer in FMOD
+
+This project implements an FIR filter using circular buffer in FMOD and C++/OpenGL.
