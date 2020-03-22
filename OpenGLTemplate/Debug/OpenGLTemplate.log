@@ -1,2 +1,3 @@
 ﻿  Audio.cpp
+C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(25,8): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
   OpenGLTemplate.vcxproj -> C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\Debug\OpenGLTemplate.exe

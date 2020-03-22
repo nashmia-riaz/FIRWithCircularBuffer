@@ -20,29 +20,28 @@ void FmodErrorCheck(FMOD_RESULT result)
 float* ApplyZeroPadding(float* data, float* filter)
 {
 	//p = ceil((f-1) / 2)
-	int filterSize = sizeof(filter) / sizeof(float);
+	int filterSize = sizeof(*filter) / sizeof(float);
+	int dataSize = sizeof(*data) / sizeof(float);
 	int p = ceil((filterSize - 1) / 2);
-
-	data = new float[p * 2]; //allocate data for zero padding
+	float* zeroPaddedData = new float[dataSize + p * 2];
 
 	//calculate data size
-	float dataSize = sizeof(data) / sizeof(float);
+	int zeroPaddedDataSize = sizeof(*zeroPaddedData) / sizeof(float);
 
-	//shift all data ahead for zero padding
-	for (int i = p; i < dataSize; i++) {
-		data[i - p] = data[i];
+	for (int i = 0; i < p; i++) {
+		zeroPaddedData[i] = 0;
 	}
 
-	//prepend zeros
-	for (int i = 0; i < p; i++)
-		data[i] = 0;
-
-	//append zeros
-	for (int i = dataSize - p; i < dataSize; i++) {
-		data[i] = 0;
+	for (int i = p; i < zeroPaddedDataSize - p; i++) {
+		zeroPaddedData[i] = data[i-p];
 	}
 
-	return data;
+	for (int i = zeroPaddedDataSize - p; i < zeroPaddedDataSize; i++) {
+		zeroPaddedData[i] = 0;
+	}
+
+	data = zeroPaddedData;
+	return zeroPaddedData;
 }
 
 
@@ -83,9 +82,10 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 	auto buffer_size = sizeof(*data->circ_buffer) / sizeof(float); 
 	auto mean_length = buffer_size / inchannels;
 
-	float filter[4] = { 0.25, 0.25, 0.25, 0.25 };
+	//dynamically making a filter of length 4 for now
+	float* filter = { new float[4]{0.25, 0.25, 0.25, 0.25} };
 
-	inbuffer = ApplyZeroPadding(inbuffer, filter);
+	ApplyZeroPadding(inbuffer, filter);
 
 	if (buffer_size <= 0) return FMOD_ERR_MEMORY;
 
