@@ -3,8 +3,6 @@
 #include "./include/fmod_studio/fmod.hpp"
 #include "./include/fmod_studio/fmod_errors.h"
 
-
-
 class CAudio
 {
 public:
@@ -16,7 +14,6 @@ public:
 	bool LoadMusicStream(char *filename);
 	bool PlayMusicStream();
 	void Update();
-
 private:
 
 	FMOD_RESULT result;

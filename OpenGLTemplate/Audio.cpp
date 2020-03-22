@@ -1,4 +1,5 @@
 #include "Audio.h"
+#include <math.h>
 
 #pragma comment(lib, "lib/fmod_vc.lib")
 
@@ -15,6 +16,35 @@ void FmodErrorCheck(FMOD_RESULT result)
 		// Warning: error message commented out -- if headphones not plugged into computer in lab, error occurs
 	}
 }
+
+float* ApplyZeroPadding(float* data, float* filter)
+{
+	//p = ceil((f-1) / 2)
+	int filterSize = sizeof(filter) / sizeof(float);
+	int p = ceil((filterSize - 1) / 2);
+
+	data = new float[p * 2]; //allocate data for zero padding
+
+	//calculate data size
+	float dataSize = sizeof(data) / sizeof(float);
+
+	//shift all data ahead for zero padding
+	for (int i = p; i < dataSize; i++) {
+		data[i - p] = data[i];
+	}
+
+	//prepend zeros
+	for (int i = 0; i < p; i++)
+		data[i] = 0;
+
+	//append zeros
+	for (int i = dataSize - p; i < dataSize; i++) {
+		data[i] = 0;
+	}
+
+	return data;
+}
+
 
 /*
 	Callback called when DSP is created.   This implementation creates a structure which is attached to the dsp state's 'plugindata' member.
@@ -50,8 +80,12 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 {
 	mydsp_data_t* data = (mydsp_data_t*) dsp_state->plugindata;	//add data into our structure
 
-	auto buffer_size = 40 * inchannels; // sizeof(*data->circ_buffer) / sizeof(float); 
+	auto buffer_size = sizeof(*data->circ_buffer) / sizeof(float); 
 	auto mean_length = buffer_size / inchannels;
+
+	float filter[4] = { 0.25, 0.25, 0.25, 0.25 };
+
+	inbuffer = ApplyZeroPadding(inbuffer, filter);
 
 	if (buffer_size <= 0) return FMOD_ERR_MEMORY;
 
@@ -75,11 +109,10 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 			int circ_write_pos = (data->sample_count * inchannels + chan) % buffer_size;
 			data->circ_buffer[circ_write_pos] = inbuffer[samp * inchannels + chan];
 			outbuffer[samp * *outchannels + chan] = 0;
-			for (int i = 0; i < mean_length; i++) {
+			for (int i = 0; i < sizeof(filter)/sizeof(float); i++) {
 				outbuffer[samp * *outchannels + chan] +=
-					data->circ_buffer[(data->sample_count - i * inchannels + chan) % buffer_size]; 
+					data->circ_buffer[(data->sample_count - i * inchannels + chan) % buffer_size] * filter[i]; 
 			}
-			outbuffer[samp * *outchannels + chan] = outbuffer[samp * *outchannels + chan] / mean_length;
 		}
 		data->sample_count++;
 	}
