@@ -13,7 +13,8 @@ public:
 	bool PlayEventSound();
 	bool LoadMusicStream(char *filename);
 	bool PlayMusicStream();
-	void Update();
+	void FilterSwitch();	
+	void Update(float dt);
 private:
 
 	FMOD_RESULT result;
@@ -22,14 +23,21 @@ private:
 
 	FMOD::Sound *m_music;
 	FMOD::Channel *m_musicChannel;
-
+	FMOD::ChannelGroup* m_mastergroup;
 	FMOD::DSP *m_dsp;
+
+	bool bypass;
 
 };
 typedef struct
 {
 	float* circ_buffer;
 	float volume_linear;
+	float speed_percent;
 	int   sample_count;
 	int   channels;
+
+	float* b_filter1;
+	float* b_filter2;
+
 } mydsp_data_t;

@@ -1,5 +1,6 @@
 #include "Audio.h"
 #include <math.h>
+#include <cstdio>
 
 #pragma comment(lib, "lib/fmod_vc.lib")
 
@@ -44,6 +45,22 @@ float* ApplyZeroPadding(float* data, float* filter)
 	return zeroPaddedData;
 }
 
+float* mixed_filter(float* filter1, float* filter2, float mix_ratio)
+{
+	float mix_filt1[21];
+	float mix_filt2[21];
+	float mixed_filt[21];
+
+	for (int i = 0; i < 21; ++i)
+	{
+		mix_filt1[i] = filter1[i] * (1 - mix_ratio);
+		mix_filt2[i] = filter2[i] * (mix_ratio);
+		mixed_filt[i] = mix_filt1[i] + mix_filt2[i];
+	}
+
+	return mixed_filt;
+}
+
 
 /*
 	Callback called when DSP is created.   This implementation creates a structure which is attached to the dsp state's 'plugindata' member.
@@ -62,7 +79,16 @@ float* ApplyZeroPadding(float* data, float* filter)
 	}
 	dsp_state->plugindata = data;
 	data->volume_linear = 1.0f;
+	data->speed_percent = 1.0f;
 	data->sample_count = blocksize;
+	data->b_filter1 = { new float[21]{ -0.00349319,  0.00047716,  0.00459594,  0.00871522,  0.0126823,   0.01634645,
+		0.01956573,  0.02221357,  0.02418469,  0.02540006,  0.02581071,  0.02540006,
+		0.02418469,  0.02221357,  0.01956573,  0.01634645,  0.0126823,   0.00871522,
+		0.00459594,  0.00047716, - 0.00349319} };
+	data->b_filter2 = { new float[21] {-0.01911611, - 0.02526179, - 0.02772793, - 0.02595434, - 0.02006462, - 0.01086989,
+		0.0002479,   0.01155558,  0.02125468,  0.02778399,  0.03008517,  0.02778399,
+		0.02125468,  0.01155558,  0.0002479, - 0.01086989, - 0.02006462, - 0.02595434,
+		- 0.02772793, - 0.02526179, - 0.01911611} };
 
 	data->circ_buffer = (float*)malloc(blocksize * 8 * sizeof(float));      // *8 = maximum size allowing room for 7.1.   Could ask dsp_state->functions->getspeakermode for the right speakermode to get real speaker count.
 	if (!data->circ_buffer)
@@ -79,7 +105,7 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 {
 	mydsp_data_t* data = (mydsp_data_t*) dsp_state->plugindata;	//add data into our structure
 
-	auto buffer_size = sizeof(*data->circ_buffer) / sizeof(float); 
+	auto buffer_size = 40 * inchannels; //sizeof(*data->circ_buffer) / sizeof(float); 
 	auto mean_length = buffer_size / inchannels;
 
 	//dynamically making a filter of length 4 for now
@@ -120,6 +146,77 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 	return FMOD_OK;
 }
 
+FMOD_RESULT F_CALLBACK myDSPReleaseCallback(FMOD_DSP_STATE* dsp_state)
+{
+	if (dsp_state->plugindata)
+	{
+		mydsp_data_t* data = (mydsp_data_t*)dsp_state->plugindata;
+
+		if (data->circ_buffer)
+		{
+			free(data->circ_buffer);
+		}
+
+		free(data);
+	}
+
+	return FMOD_OK;
+}
+
+FMOD_RESULT F_CALLBACK myDSPGetParameterDataCallback(FMOD_DSP_STATE* dsp_state, int index, void** data, unsigned int* length, char*)
+{
+	if (index == 0)
+	{
+		unsigned int blocksize;
+		FMOD_RESULT result;
+		mydsp_data_t* mydata = (mydsp_data_t*)dsp_state->plugindata;
+
+		result = dsp_state->functions->getblocksize(dsp_state, &blocksize);
+		FmodErrorCheck(result);
+		
+		*data = (void*)mydata;
+		*length = blocksize * 2 * sizeof(float);
+
+		return FMOD_OK;
+	}
+
+	return FMOD_ERR_INVALID_PARAM;
+}
+
+FMOD_RESULT F_CALLBACK myDSPSetParameterFloatCallback(FMOD_DSP_STATE* dsp_state, int index, float value)
+{
+	if (index == 1)
+	{
+		mydsp_data_t* mydata = (mydsp_data_t*)dsp_state->plugindata;
+
+		mydata->speed_percent = value;
+
+		return FMOD_OK;
+	}
+
+	return FMOD_ERR_INVALID_PARAM;
+}
+
+FMOD_RESULT F_CALLBACK myDSPGetParameterFloatCallback(FMOD_DSP_STATE* dsp_state, int index, float* value, char* valstr)
+{
+	if (index == 1)
+	{
+		mydsp_data_t* mydata = (mydsp_data_t*)dsp_state->plugindata;
+
+		*value = mydata->speed_percent;
+		if (valstr)
+		{
+			sprintf(valstr, "%d", (int)((*value * 100.0f) + 0.5f));
+		}
+
+		return FMOD_OK;
+	}
+
+	return FMOD_ERR_INVALID_PARAM;
+}
+
+
+
 CAudio::CAudio()
 {}
 
@@ -146,22 +243,36 @@ bool CAudio::Initialise()
 	{
 		FMOD_DSP_DESCRIPTION dspdesc;
 		memset(&dspdesc, 0, sizeof(dspdesc));
+		FMOD_DSP_PARAMETER_DESC wavedata_desc;
+		FMOD_DSP_PARAMETER_DESC speed_desc;
+		FMOD_DSP_PARAMETER_DESC* paramdesc[2] =
+		{
+			&wavedata_desc,
+			&speed_desc
+		};
+
+		FMOD_DSP_INIT_PARAMDESC_DATA(wavedata_desc, "wave data", "", "wave data", FMOD_DSP_PARAMETER_DATA_TYPE_USER);
+		FMOD_DSP_INIT_PARAMDESC_FLOAT(speed_desc, "speed", "%", "speed in percent", 0, 1, 1);
 
 		strncpy_s(dspdesc.name, "My first DSP unit", sizeof(dspdesc.name));
 		dspdesc.numinputbuffers = 1;
 		dspdesc.numoutputbuffers = 1;
 		dspdesc.read = DSPCallback;
 		dspdesc.create = myDSPCreateCallback;
+		dspdesc.release = myDSPReleaseCallback;
+		dspdesc.getparameterdata = myDSPGetParameterDataCallback;
+		dspdesc.setparameterfloat = myDSPSetParameterFloatCallback;
+		dspdesc.getparameterfloat = myDSPGetParameterFloatCallback;
+		dspdesc.numparameters = 2;
+		dspdesc.paramdesc = paramdesc;
 
 		result = m_FmodSystem->createDSP(&dspdesc, &m_dsp);
 		FmodErrorCheck(result);
 
-		if (result != FMOD_OK)
-			return false;
+		if (result != FMOD_OK) return false;
 	}
 
 	return true;
-	
 }
 
 // Load an event sound
@@ -173,7 +284,6 @@ bool CAudio::LoadEventSound(char *filename)
 		return false;
 
 	return true;
-	
 
 }
 
@@ -198,8 +308,6 @@ bool CAudio::LoadMusicStream(char *filename)
 		return false;
 
 	return true;
-	
-
 }
 
 // Play a music stream
@@ -216,7 +324,21 @@ bool CAudio::PlayMusicStream()
 	return true;
 }
 
-void CAudio::Update()
+void CAudio::Update(float dt)
 {
 	m_FmodSystem->update();
+
+	result = m_dsp->getBypass(&bypass);
+	FmodErrorCheck(result);
+
+}
+
+void CAudio::FilterSwitch()
+{
+	if (bypass == true)
+		result = m_dsp->setBypass(0);
+	else if (bypass == false)
+		result = m_dsp->setBypass(1);
+	FmodErrorCheck(result);
+
 }

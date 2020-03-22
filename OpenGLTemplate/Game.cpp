@@ -286,7 +286,7 @@ void Game::Update()
 	// Update the camera using the amount of time that has elapsed to avoid framerate dependent motion
 	m_pCamera->Update(m_dt);
 
-	m_pAudio->Update();
+	m_pAudio->Update(m_dt);
 }
 
 
@@ -430,6 +430,9 @@ LRESULT Game::ProcessEvents(HWND window,UINT message, WPARAM w_param, LPARAM l_p
 			break;
 		case VK_F1:
 			m_pAudio->PlayEventSound();
+			break;
+		case 'B':
+			m_pAudio->FilterSwitch();
 			break;
 		}
 		break;
