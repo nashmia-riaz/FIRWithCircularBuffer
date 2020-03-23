@@ -45,23 +45,6 @@ float* ApplyZeroPadding(float* data, float* filter)
 	return zeroPaddedData;
 }
 
-float* mixed_filter(float* filter1, float* filter2, float mix_ratio)
-{
-	float mix_filt1[21];
-	float mix_filt2[21];
-	float mixed_filt[21];
-
-	for (int i = 0; i < 21; ++i)
-	{
-		mix_filt1[i] = filter1[i] * (1 - mix_ratio);
-		mix_filt2[i] = filter2[i] * (mix_ratio);
-		mixed_filt[i] = mix_filt1[i] + mix_filt2[i];
-	}
-
-	return mixed_filt;
-}
-
-
 /*
 	Callback called when DSP is created.   This implementation creates a structure which is attached to the dsp state's 'plugindata' member.
 */FMOD_RESULT F_CALLBACK myDSPCreateCallback(FMOD_DSP_STATE* dsp_state)
@@ -105,11 +88,25 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 {
 	mydsp_data_t* data = (mydsp_data_t*) dsp_state->plugindata;	//add data into our structure
 
-	auto buffer_size = 40 * inchannels; //sizeof(*data->circ_buffer) / sizeof(float); 
+	auto buffer_size = 30 * inchannels; // sizeof(*data->circ_buffer) / sizeof(float);  
 	auto mean_length = buffer_size / inchannels;
 
-	//dynamically making a filter of length 4 for now
-	float* filter = { new float[4]{0.25, 0.25, 0.25, 0.25} };
+	//filter tests
+	//float* filter = data->b_filter2;		//this works...
+
+	//interpolates filter
+	float mix_filt1[21];
+	float mix_filt2[21];
+	float mixed_filt[21];
+
+	for (int i = 0; i < 21; i++)
+	{
+		mix_filt1[i] = data->b_filter1[i] * (1 - data->speed_percent);
+		mix_filt2[i] = data->b_filter2[i] * (data->speed_percent);
+		mixed_filt[i] = mix_filt1[i] + mix_filt2[i];
+	}
+
+	float* filter = mixed_filt;
 
 	ApplyZeroPadding(inbuffer, filter);
 
@@ -329,6 +326,7 @@ void CAudio::Update(float dt)
 	m_FmodSystem->update();
 
 	result = m_dsp->getBypass(&bypass);
+
 	FmodErrorCheck(result);
 
 }
@@ -339,6 +337,36 @@ void CAudio::FilterSwitch()
 		result = m_dsp->setBypass(0);
 	else if (bypass == false)
 		result = m_dsp->setBypass(1);
+	FmodErrorCheck(result);
+
+}
+
+void CAudio::SpeedDown(float &speedpercent)
+{
+	result = m_dsp->getParameterFloat(1, &speedpercent, 0, 0);
+	FmodErrorCheck(result);
+
+	if (speedpercent > 0.0f)
+	{
+		speedpercent -= 0.1f;
+	}
+
+	result = m_dsp->setParameterFloat(1, speedpercent);
+	FmodErrorCheck(result);
+
+}
+
+void CAudio::SpeedUp(float &speedpercent)
+{
+	result = m_dsp->getParameterFloat(1, &speedpercent, 0, 0);
+	FmodErrorCheck(result);
+
+	if (speedpercent < 1.0f)
+	{
+		speedpercent += 0.1f;
+	}
+
+	result = m_dsp->setParameterFloat(1, speedpercent);
 	FmodErrorCheck(result);
 
 }

@@ -40,6 +40,7 @@ private:
 	double m_dt;
 	int m_framesPerSecond;
 	bool m_appActive;
+	float m_speed_percent;
 
 
 public:

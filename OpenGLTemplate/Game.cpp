@@ -53,6 +53,7 @@ Game::Game()
 	m_framesPerSecond = 0;
 	m_frameCount = 0;
 	m_elapsedTime = 0.0f;
+	m_speed_percent = 1.f;
 }
 
 // Destructor
@@ -322,7 +323,7 @@ void Game::DisplayFrameRate()
 		fontProgram->SetUniform("matrices.modelViewMatrix", glm::mat4(1));
 		fontProgram->SetUniform("matrices.projMatrix", m_pCamera->GetOrthographicProjectionMatrix());
 		fontProgram->SetUniform("vColour", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-		m_pFtFont->Render(20, height - 20, 20, "FPS: %d", m_framesPerSecond);
+		m_pFtFont->Render(20, height - 20, 20, "FPS: %f", m_speed_percent);
 	}
 }
 
@@ -433,6 +434,12 @@ LRESULT Game::ProcessEvents(HWND window,UINT message, WPARAM w_param, LPARAM l_p
 			break;
 		case 'B':
 			m_pAudio->FilterSwitch();
+			break;
+		case 'M':
+			m_pAudio->SpeedUp(m_speed_percent);
+			break;
+		case'N':
+			m_pAudio->SpeedDown(m_speed_percent);
 			break;
 		}
 		break;

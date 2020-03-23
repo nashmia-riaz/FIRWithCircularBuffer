@@ -14,6 +14,8 @@ public:
 	bool LoadMusicStream(char *filename);
 	bool PlayMusicStream();
 	void FilterSwitch();	
+	void SpeedUp(float &speedpercent);
+	void SpeedDown(float &speedpercent);
 	void Update(float dt);
 private:
 
