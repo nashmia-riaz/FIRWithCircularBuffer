@@ -1,11 +1,11 @@
 ﻿  Audio.cpp
-C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(26,8): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(70,40): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(74,43): warning C4305: 'initializing': truncation from 'double' to 'float'
-C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(206,1): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(26,8): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(70,40): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(74,43): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(206,1): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1774): message : see declaration of 'sprintf'
-C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(251,1): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(251,1): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\string.h(338): message : see declaration of 'strncpy'
-C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(252,1): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(252,1): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
 C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\string.h(338): message : see declaration of 'strncpy'
-  OpenGLTemplate.vcxproj -> C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\Debug\OpenGLTemplate.exe
+  OpenGLTemplate.vcxproj -> C:\Users\nashm\Documents\MSc Computer Games Technology\FIRWithCircularBuffer\Debug\OpenGLTemplate.exe

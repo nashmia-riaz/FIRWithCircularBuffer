@@ -106,9 +106,9 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 		mixed_filt[i] = mix_filt1[i] + mix_filt2[i];
 	}
 
-	float* filter = mixed_filt;
+	//float* filter = mixed_filt;
 
-	ApplyZeroPadding(inbuffer, filter);
+	//ApplyZeroPadding(inbuffer, filter);
 
 	if (buffer_size <= 0) return FMOD_ERR_MEMORY;
 
@@ -132,9 +132,9 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 			int circ_write_pos = (data->sample_count * inchannels + chan) % buffer_size;
 			data->circ_buffer[circ_write_pos] = inbuffer[samp * inchannels + chan];
 			outbuffer[samp * *outchannels + chan] = 0;
-			for (int i = 0; i < sizeof(filter)/sizeof(float); i++) {
+			for (int i = 0; i < 21; i++) {
 				outbuffer[samp * *outchannels + chan] +=
-					data->circ_buffer[(data->sample_count - i * inchannels + chan) % buffer_size] * filter[i]; 
+					data->circ_buffer[(data->sample_count - i * inchannels + chan) % buffer_size] * mixed_filt[i]; 
 			}
 		}
 		data->sample_count++;
