@@ -21,6 +21,11 @@ void CCamera::Set(glm::vec3 &position, glm::vec3 &viewpoint, glm::vec3 &upVector
 
 }
 
+void CCamera::Speed(float &speedfactor)
+{
+	m_speed = 0.05f * speedfactor * speedfactor;
+}
+
 // Respond to mouse movement
 void CCamera::SetViewByMouse()
 {  
@@ -98,11 +103,17 @@ void CCamera::Advance(double direction)
 // Update the camera to respond to mouse motion for rotations and keyboard for translation
 void CCamera::Update(double dt)
 {
+	float y_position = m_position.y;
+
 	glm::vec3 vector = glm::cross(m_view - m_position, m_upVector);
 	m_strafeVector = glm::normalize(vector);
 
 	SetViewByMouse();
 	TranslateByKeyboard(dt);
+
+	//keeps camera from going below ground plane
+	if (m_position.y <= 10.f) m_position = glm::vec3(m_position.x, y_position, m_position.z);
+
 }
 
 // Update the camera to respond to key presses for translation

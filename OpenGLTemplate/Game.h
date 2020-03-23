@@ -41,6 +41,7 @@ private:
 	int m_framesPerSecond;
 	bool m_appActive;
 	float m_speed_percent;
+	bool m_filterswitch;
 
 
 public:

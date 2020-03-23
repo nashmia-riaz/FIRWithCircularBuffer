@@ -88,7 +88,7 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 {
 	mydsp_data_t* data = (mydsp_data_t*) dsp_state->plugindata;	//add data into our structure
 
-	auto buffer_size = 30 * inchannels; // sizeof(*data->circ_buffer) / sizeof(float);  
+	auto buffer_size = 11 * inchannels;// sizeof(*data->circ_buffer) / sizeof(float);
 	auto mean_length = buffer_size / inchannels;
 
 	//filter tests
@@ -108,7 +108,7 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 
 	//float* filter = mixed_filt;
 
-	//ApplyZeroPadding(inbuffer, filter);
+	ApplyZeroPadding(inbuffer, mixed_filt);
 
 	if (buffer_size <= 0) return FMOD_ERR_MEMORY;
 
@@ -348,7 +348,7 @@ void CAudio::SpeedDown(float &speedpercent)
 
 	if (speedpercent > 0.0f)
 	{
-		speedpercent -= 0.1f;
+		speedpercent -= 0.05f;
 	}
 
 	result = m_dsp->setParameterFloat(1, speedpercent);
@@ -363,7 +363,7 @@ void CAudio::SpeedUp(float &speedpercent)
 
 	if (speedpercent < 1.0f)
 	{
-		speedpercent += 0.1f;
+		speedpercent += 0.05f;
 	}
 
 	result = m_dsp->setParameterFloat(1, speedpercent);

@@ -54,6 +54,7 @@ Game::Game()
 	m_frameCount = 0;
 	m_elapsedTime = 0.0f;
 	m_speed_percent = 1.f;
+	m_filterswitch = true;
 }
 
 // Destructor
@@ -287,6 +288,9 @@ void Game::Update()
 	// Update the camera using the amount of time that has elapsed to avoid framerate dependent motion
 	m_pCamera->Update(m_dt);
 
+	// Updates camera speed
+	m_pCamera->Speed(m_speed_percent);
+
 	m_pAudio->Update(m_dt);
 }
 
@@ -300,6 +304,19 @@ void Game::DisplayFrameRate()
 
 	RECT dimensions = m_gameWindow.GetDimensions();
 	int height = dimensions.bottom - dimensions.top;
+	int width = abs(dimensions.right - dimensions.left);
+
+	// setup font program
+	fontProgram->UseProgram();
+	glDisable(GL_DEPTH_TEST);
+	fontProgram->SetUniform("matrices.modelViewMatrix", glm::mat4(1));
+	fontProgram->SetUniform("matrices.projMatrix", m_pCamera->GetOrthographicProjectionMatrix());
+
+	// render instructions for controls
+	fontProgram->SetUniform("vColour", glm::vec4(1.0f, 0.5f, 0.5f, 1.0f));
+	m_pFtFont->Render(width * 3/4 , height - 20, 20, "'B' : filter switch");
+	m_pFtFont->Render(width * 3 / 4, height - 40, 20, "'N' : slow down");
+	m_pFtFont->Render(width * 3 / 4, height - 60, 20, "'M' : speed up");
 
 	// Increase the elapsed time and frame counter
 	m_elapsedTime += m_dt;
@@ -318,12 +335,19 @@ void Game::DisplayFrameRate()
 
 	if (m_framesPerSecond > 0) {
 		// Use the font shader program and render the text
-		fontProgram->UseProgram();
-		glDisable(GL_DEPTH_TEST);
-		fontProgram->SetUniform("matrices.modelViewMatrix", glm::mat4(1));
-		fontProgram->SetUniform("matrices.projMatrix", m_pCamera->GetOrthographicProjectionMatrix());
-		fontProgram->SetUniform("vColour", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-		m_pFtFont->Render(20, height - 20, 20, "FPS: %f", m_speed_percent);
+		fontProgram->SetUniform("vColour", glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+		m_pFtFont->Render(20, height - 20, 20, "Speed Factor: %f", m_speed_percent);
+	}
+
+	if (m_filterswitch == true)
+	{
+		fontProgram->SetUniform("vColour", glm::vec4(0.3f, 1.0f, 0.1f, 1.0f));
+		m_pFtFont->Render(20, height - 40, 20, "Filter ON");
+	}
+	else
+	{
+		fontProgram->SetUniform("vColour", glm::vec4(1.0f, 0.1f, 0.1f, 1.0f));
+		m_pFtFont->Render(20, height - 40, 20, "Filter OFF");
 	}
 }
 
@@ -434,6 +458,11 @@ LRESULT Game::ProcessEvents(HWND window,UINT message, WPARAM w_param, LPARAM l_p
 			break;
 		case 'B':
 			m_pAudio->FilterSwitch();
+
+			if (m_filterswitch == true)
+				m_filterswitch = 0;
+			else m_filterswitch = true;
+
 			break;
 		case 'M':
 			m_pAudio->SpeedUp(m_speed_percent);
@@ -443,6 +472,7 @@ LRESULT Game::ProcessEvents(HWND window,UINT message, WPARAM w_param, LPARAM l_p
 			break;
 		}
 		break;
+
 
 	case WM_DESTROY:
 		PostQuitMessage(0);
