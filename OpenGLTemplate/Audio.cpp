@@ -18,10 +18,10 @@ void FmodErrorCheck(FMOD_RESULT result)
 	}
 }
 
-float* ApplyZeroPadding(float* data, float* filter)
+/*Function that applied zero padding to a buffer, based on filter and it's size*/
+float* ApplyZeroPadding(float* data, int filterSize)
 {
-	//p = ceil((f-1) / 2)
-	int filterSize = sizeof(*filter) / sizeof(float);
+	//to calculate zero padding: p = ceil((f-1) / 2)
 	int dataSize = sizeof(*data) / sizeof(float);
 	int p = ceil((filterSize - 1) / 2);
 	float* zeroPaddedData = new float[dataSize + p * 2];
@@ -29,18 +29,22 @@ float* ApplyZeroPadding(float* data, float* filter)
 	//calculate data size
 	int zeroPaddedDataSize = sizeof(*zeroPaddedData) / sizeof(float);
 
+	//prepend zeros
 	for (int i = 0; i < p; i++) {
 		zeroPaddedData[i] = 0;
 	}
 
+	//copy over original data
 	for (int i = p; i < zeroPaddedDataSize - p; i++) {
 		zeroPaddedData[i] = data[i-p];
 	}
 
+	//append zeros
 	for (int i = zeroPaddedDataSize - p; i < zeroPaddedDataSize; i++) {
 		zeroPaddedData[i] = 0;
 	}
 
+	//set pointer to new data array
 	data = zeroPaddedData;
 	return zeroPaddedData;
 }
@@ -64,6 +68,8 @@ float* ApplyZeroPadding(float* data, float* filter)
 	data->volume_linear = 1.0f;
 	data->speed_percent = 1.0f;
 	data->sample_count = blocksize;
+
+	/*the two filters and coefficients copied from signal.firls in python*/
 	data->b_filter1 = { new float[21]{ -0.00349319,  0.00047716,  0.00459594,  0.00871522,  0.0126823,   0.01634645,
 		0.01956573,  0.02221357,  0.02418469,  0.02540006,  0.02581071,  0.02540006,
 		0.02418469,  0.02221357,  0.01956573,  0.01634645,  0.0126823,   0.00871522,
@@ -99,6 +105,8 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 	float mix_filt2[21];
 	float mixed_filt[21];
 
+	//interpolate the filter by multiplying with x and adding, using formula:
+	//B(x) = (1-x) B1 + x B2
 	for (int i = 0; i < 21; i++)
 	{
 		mix_filt1[i] = data->b_filter1[i] * (1 - data->speed_percent);
@@ -106,9 +114,7 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 		mixed_filt[i] = mix_filt1[i] + mix_filt2[i];
 	}
 
-	//float* filter = mixed_filt;
-
-	ApplyZeroPadding(inbuffer, mixed_filt);
+	ApplyZeroPadding(inbuffer, 21);
 
 	if (buffer_size <= 0) return FMOD_ERR_MEMORY;
 
@@ -116,19 +122,8 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 	{
 		for (int chan = 0; chan < *outchannels; chan++)	//run through out channels length
 		{
-			// FIR Filter with 4 coefficients
-			/*	
-			int circ_write_pos = (data->sample_count * inchannels + chan) % buffer_size;
-			data->circ_buffer[circ_write_pos] = inbuffer[samp + inchannels + chan];
-			outbuffer[samp * *outchannels + chan] = (
-				inbuffer[samp * *outchannels + chan] +
-				data->circ_buffer[(data->sample_count - 1 * inchannels + chan) % buffer_size] +
-				data->circ_buffer[(data->sample_count - 2 * inchannels + chan) % buffer_size] + 
-				data->circ_buffer[(data->sample_count - 3 * inchannels + chan) % buffer_size]
-				) / 4;
-			*/
-
-			// FIR Filter by change buffer size
+			// FIR Filter by change buffer size.
+			//Convolution by multiplying filter with data and summing
 			int circ_write_pos = (data->sample_count * inchannels + chan) % buffer_size;
 			data->circ_buffer[circ_write_pos] = inbuffer[samp * inchannels + chan];
 			outbuffer[samp * *outchannels + chan] = 0;
@@ -143,6 +138,7 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 	return FMOD_OK;
 }
 
+/* Callback for release of DSP in FMOD */
 FMOD_RESULT F_CALLBACK myDSPReleaseCallback(FMOD_DSP_STATE* dsp_state)
 {
 	if (dsp_state->plugindata)
@@ -160,6 +156,7 @@ FMOD_RESULT F_CALLBACK myDSPReleaseCallback(FMOD_DSP_STATE* dsp_state)
 	return FMOD_OK;
 }
 
+/*DSP callback for setting parameters upon initialisation */
 FMOD_RESULT F_CALLBACK myDSPGetParameterDataCallback(FMOD_DSP_STATE* dsp_state, int index, void** data, unsigned int* length, char*)
 {
 	if (index == 0)
@@ -251,6 +248,7 @@ bool CAudio::Initialise()
 		FMOD_DSP_INIT_PARAMDESC_DATA(wavedata_desc, "wave data", "", "wave data", FMOD_DSP_PARAMETER_DATA_TYPE_USER);
 		FMOD_DSP_INIT_PARAMDESC_FLOAT(speed_desc, "speed", "%", "speed in percent", 0, 1, 1);
 
+		//Setting up our custome DSP and it's callbacks
 		strncpy_s(dspdesc.name, "My first DSP unit", sizeof(dspdesc.name));
 		dspdesc.numinputbuffers = 1;
 		dspdesc.numoutputbuffers = 1;
@@ -331,6 +329,7 @@ void CAudio::Update(float dt)
 
 }
 
+/*turns the filter on or off*/
 void CAudio::FilterSwitch()
 {
 	if (bypass == true)
@@ -341,6 +340,7 @@ void CAudio::FilterSwitch()
 
 }
 
+//change speed percentage parameter. Taking input from Game.cpp
 void CAudio::SpeedDown(float &speedpercent)
 {
 	result = m_dsp->getParameterFloat(1, &speedpercent, 0, 0);
@@ -356,6 +356,7 @@ void CAudio::SpeedDown(float &speedpercent)
 
 }
 
+//change speed percentage parameter. Taking input from Game.cpp
 void CAudio::SpeedUp(float &speedpercent)
 {
 	result = m_dsp->getParameterFloat(1, &speedpercent, 0, 0);
