@@ -50,10 +50,11 @@ float* ApplyZeroPadding(float* data, int filterSize)
 }
 
 /*
-	Callback called when DSP is created.   This implementation creates a structure which is attached to the dsp state's 'plugindata' member.
+	Callback called when DSP is created.   
+	This implementation creates a structure which is attached to the dsp state's 'plugindata' member.
 */FMOD_RESULT F_CALLBACK myDSPCreateCallback(FMOD_DSP_STATE* dsp_state)
 {
-	unsigned int blocksize = 256;
+	unsigned int blocksize = 256;  //size of sample
 	FMOD_RESULT result;
 
 	result = dsp_state->functions->getblocksize(dsp_state, &blocksize);
@@ -64,16 +65,19 @@ float* ApplyZeroPadding(float* data, int filterSize)
 	{
 		return FMOD_ERR_MEMORY;
 	}
+	//sets initial values to the fields in mydsp_data_t struct
 	dsp_state->plugindata = data;
 	data->volume_linear = 1.0f;
 	data->speed_percent = 1.0f;
 	data->sample_count = blocksize;
 
 	/*the two filters and coefficients copied from signal.firls in python*/
+	//array to hold coefficients (B1) of static filter1, needed for interpolation. 
 	data->b_filter1 = { new float[21]{ -0.00349319,  0.00047716,  0.00459594,  0.00871522,  0.0126823,   0.01634645,
 		0.01956573,  0.02221357,  0.02418469,  0.02540006,  0.02581071,  0.02540006,
 		0.02418469,  0.02221357,  0.01956573,  0.01634645,  0.0126823,   0.00871522,
 		0.00459594,  0.00047716, - 0.00349319} };
+	//array to hold coefficients (B2) of static filter2, needed for interpolation
 	data->b_filter2 = { new float[21] {-0.01911611, - 0.02526179, - 0.02772793, - 0.02595434, - 0.02006462, - 0.01086989,
 		0.0002479,   0.01155558,  0.02125468,  0.02778399,  0.03008517,  0.02778399,
 		0.02125468,  0.01155558,  0.0002479, - 0.01086989, - 0.02006462, - 0.02595434,
@@ -94,16 +98,17 @@ FMOD_RESULT F_CALLBACK DSPCallback(FMOD_DSP_STATE *dsp_state, float *inbuffer, f
 {
 	mydsp_data_t* data = (mydsp_data_t*) dsp_state->plugindata;	//add data into our structure
 
-	auto buffer_size = 11 * inchannels;// sizeof(*data->circ_buffer) / sizeof(float);
+	auto buffer_size = 11 * inchannels; //size of buffer
 	auto mean_length = buffer_size / inchannels;
 
-	//filter tests
-	//float* filter = data->b_filter2;		//this works...
+	//Filter coefficient interpolation, using the interpolation equation:
+	// B(x) = (1-x)B1 + xB2
+	// where 'x' is the real-time controllable value. In the game, it will be
+	// controlled via the imposter horse's speed, speed_percent. 
 
-	//interpolates filter
-	float mix_filt1[21];
-	float mix_filt2[21];
-	float mixed_filt[21];
+	float mix_filt1[21];		//fraction of B1 depending on 'x'
+	float mix_filt2[21];		//fraction of B2 depending on 'x'
+	float mixed_filt[21];		//new filter resulting from interpolation of B1 and B2
 
 	//interpolate the filter by multiplying with x and adding, using formula:
 	//B(x) = (1-x) B1 + x B2
@@ -177,6 +182,7 @@ FMOD_RESULT F_CALLBACK myDSPGetParameterDataCallback(FMOD_DSP_STATE* dsp_state, 
 	return FMOD_ERR_INVALID_PARAM;
 }
 
+//set the float parameter for 'speed_percent' from the mydsp_data_t struct
 FMOD_RESULT F_CALLBACK myDSPSetParameterFloatCallback(FMOD_DSP_STATE* dsp_state, int index, float value)
 {
 	if (index == 1)
@@ -191,6 +197,7 @@ FMOD_RESULT F_CALLBACK myDSPSetParameterFloatCallback(FMOD_DSP_STATE* dsp_state,
 	return FMOD_ERR_INVALID_PARAM;
 }
 
+//get the float parameter for 'speed_percent' from the mydsp_data_t struct
 FMOD_RESULT F_CALLBACK myDSPGetParameterFloatCallback(FMOD_DSP_STATE* dsp_state, int index, float* value, char* valstr)
 {
 	if (index == 1)
@@ -242,7 +249,8 @@ bool CAudio::Initialise()
 		FMOD_DSP_PARAMETER_DESC* paramdesc[2] =
 		{
 			&wavedata_desc,
-			&speed_desc
+			&speed_desc		//speed parameter that will be triggered by an in-game event, namely the player's speed
+							//which will be directly correlated with the dynamically controlled FIR filter as the 'x' in B(x)
 		};
 
 		FMOD_DSP_INIT_PARAMDESC_DATA(wavedata_desc, "wave data", "", "wave data", FMOD_DSP_PARAMETER_DATA_TYPE_USER);

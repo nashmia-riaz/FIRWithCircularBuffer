@@ -1,2 +1,14 @@
-﻿  Camera.cpp
+﻿  Audio.cpp
+C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(26,8): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(79,40): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(84,43): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(210,1): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\stdio.h(1774): message : see declaration of 'sprintf'
+C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(256,1): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\string.h(338): message : see declaration of 'strncpy'
+C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Audio.cpp(257,1): warning C4996: 'strncpy': This function or variable may be unsafe. Consider using strncpy_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+C:\Program Files (x86)\Windows Kits\10\Include\10.0.18362.0\ucrt\string.h(338): message : see declaration of 'strncpy'
+  Game.cpp
+C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\OpenGLTemplate\Game.cpp(292,19): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  Generating Code...
   OpenGLTemplate.vcxproj -> C:\Users\jihae\Desktop\MSc_Games\DSP\FIRFilter\FIRWithCircularBuffer\Debug\OpenGLTemplate.exe
